@@ -5,11 +5,11 @@ const nodemailer = require('nodemailer')
 const config = require('./config')
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp-pulse.com',
+  host: 'smtp.sendgrid.net',
   port: 465,
   secure: true,
   auth: {
-    user: process.env.SMTP_USER,
+    user: 'apikey',
     pass: process.env.SMTP_PASS,
   },
 })
