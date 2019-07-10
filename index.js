@@ -6,8 +6,8 @@ const config = require('./config')
 
 const transporter = nodemailer.createTransport({
   host: 'smtp-pulse.com',
-  port: 2525,
-  secure: false,
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -31,9 +31,6 @@ const sendError = e => {
     html: `<pre>${e.stack}</pre>`,
   })
 }
-
-sendError(new Error('safe for work'))
-sendError(new Error('not safe for work'))
 
 const main = async ({ plate, email }) => {
   try {
@@ -59,6 +56,8 @@ const main = async ({ plate, email }) => {
         subject: '[Ticket Checker] A ticket has been found',
         html: '<p>You should probably pay it</p>',
       })
+
+      console.log(`[${plate}] FOUND A CITATION ${new Date().toString().replace(/ GMT.*/, '')}`)
     } else {
       console.log(`[${plate}] Checked on ${new Date().toString().replace(/ GMT.*/, '')}`)
     }
@@ -71,5 +70,5 @@ const main = async ({ plate, email }) => {
 }
 
 schedule.scheduleJob('0 * * * *', () => {
-  // config.forEach(main)
+  config.forEach(main)
 })
