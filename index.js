@@ -1,36 +1,10 @@
 const puppeteer = require('puppeteer')
 const schedule = require('node-schedule')
-const nodemailer = require('nodemailer')
+const sendgrid = require('@sendgrid/mail')
 
 const config = require('./config')
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.sendgrid.net',
-  port: 465,
-  secure: true,
-  auth: {
-    user: 'apikey',
-    pass: process.env.SMTP_PASS,
-  },
-})
-
-let lastErrorSent = null
-
-const sendError = e => {
-  if (lastErrorSent && (Date.now() - lastErrorSent) / 1e3 / 60 / 60 < 1) {
-    // limit only one error per hour
-    return
-  }
-
-  lastErrorSent = Date.now()
-
-  transporter.sendMail({
-    from: 'system@balthazargronon.com',
-    to: 'bgronon@gmail.com',
-    subject: '[Ticket Checker] An error occured',
-    html: `<pre>${e.stack}</pre>`,
-  })
-}
+sendgrid.setApiKey(process.env.SMTP_PASS)
 
 const main = async ({ plate, email }) => {
   try {
@@ -50,11 +24,11 @@ const main = async ({ plate, email }) => {
     )
 
     if (msg !== 'No Citations Found') {
-      transporter.sendMail({
-        from: 'system@balthazargronon.com',
+      sendgrid.send({
+        from: 'system@balthazar.dev',
         to: email,
-        subject: '[Ticket Checker] A ticket has been found',
-        html: '<p>You should probably pay it</p>',
+        subject: `[Ticket Checker] A ticket has been found on ${plate}`,
+        html: '<p>You should probably pay it :)</p>',
       })
 
       console.log(`[${plate}] FOUND A CITATION ${new Date().toString().replace(/ GMT.*/, '')}`)
@@ -65,7 +39,7 @@ const main = async ({ plate, email }) => {
     await page.close()
     await browser.close()
   } catch (e) {
-    sendError(e)
+    console.log(`[ERROR] ${e.message} ${new Date().toString()}`)
   }
 }
 
