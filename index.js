@@ -19,19 +19,26 @@ const main = async ({ plate, email }) => {
 
     await page.waitForNavigation('load')
 
-    const hasMsg = await page.evaluate(
-      () => !!document.getElementById('_ctl0_contentMain_lblMessage'),
-    )
+    const totalDue = await page.evaluate(() => {
+      const el = document.getElementById('_ctl0_contentMain_lblTotalAmt')
+      if (el) {
+        return el.innerText
+      }
 
-    if (hasMsg) {
+      return null
+    })
+
+    if (totalDue) {
       sendgrid.send({
         from: 'system@balthazar.dev',
         to: email,
-        subject: `[Ticket Checker] A ticket has been found on ${plate}`,
-        html: '<p>You should probably pay it :)</p>',
+        subject: `[Ticket Checker] Unpaid citations found on ${plate}`,
+        html: `<p>Total Due ${totalDue}</p>`,
       })
 
-      console.log(`[${plate}] FOUND A CITATION ${new Date().toString().replace(/ GMT.*/, '')}`)
+      console.log(
+        `[${plate}] Found unpaid citations ${new Date().toString().replace(/ GMT.*/, '')}`,
+      )
     } else {
       console.log(`[${plate}] Checked on ${new Date().toString().replace(/ GMT.*/, '')}`)
     }
@@ -46,3 +53,5 @@ const main = async ({ plate, email }) => {
 schedule.scheduleJob('0 * * * *', () => {
   config.forEach(main)
 })
+
+config.forEach(main)
