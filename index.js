@@ -7,10 +7,10 @@ const config = require('./config')
 sendgrid.setApiKey(process.env.SMTP_PASS)
 
 const main = async ({ plate, email }) => {
-  try {
-    const browser = await puppeteer.launch()
-    const page = await browser.newPage()
+  const browser = await puppeteer.launch()
+  const page = await browser.newPage()
 
+  try {
     await page.goto('https://www.citationprocessingcenter.com/citizen-search-citation.aspx')
 
     await page.focus('#_ctl0_contentMain_txtPlate')
@@ -19,11 +19,11 @@ const main = async ({ plate, email }) => {
 
     await page.waitForNavigation('load')
 
-    const msg = await page.evaluate(
-      () => document.getElementById('_ctl0_contentMain_lblMessage').innerText,
+    const hasMsg = await page.evaluate(
+      () => !!document.getElementById('_ctl0_contentMain_lblMessage'),
     )
 
-    if (msg !== 'No Citations Found') {
+    if (hasMsg) {
       sendgrid.send({
         from: 'system@balthazar.dev',
         to: email,
@@ -35,12 +35,12 @@ const main = async ({ plate, email }) => {
     } else {
       console.log(`[${plate}] Checked on ${new Date().toString().replace(/ GMT.*/, '')}`)
     }
-
-    await page.close()
-    await browser.close()
   } catch (e) {
     console.log(`[ERROR] ${e.message} ${new Date().toString()}`)
   }
+
+  await page.close()
+  await browser.close()
 }
 
 schedule.scheduleJob('0 * * * *', () => {
