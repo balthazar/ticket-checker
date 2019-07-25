@@ -53,5 +53,3 @@ const main = async ({ plate, email }) => {
 schedule.scheduleJob('0 * * * *', () => {
   config.forEach(main)
 })
-
-config.forEach(main)
